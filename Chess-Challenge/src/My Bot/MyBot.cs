@@ -185,6 +185,11 @@ public class MyBot : IChessBot
         score += GetPieceValue(move.PromotionPieceType);
       }
 
+      if (IsDrawAfterMove(board, move))
+      {
+        score -= 10000;
+      }
+
       scores[i] = score;
     }
 
