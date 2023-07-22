@@ -61,81 +61,48 @@ public class MyBot : IChessBot
     }
 
     Move[] moves = GetOrderedMoves(board);
-    //Move[] moves = board.GetLegalMoves();
 
-    if (board.IsWhiteToMove)
+    int bestEval = board.IsWhiteToMove ? -infinity : infinity;
+
+    foreach (var move in moves)
     {
-      int maxEval = -infinity;
-
-      foreach (var move in moves)
+      if (IsCheckMateAfterMove(board, move))
       {
-        if (IsCheckMateAfterMove(board, move))
-        {
-          if (isRoot) bestMove = move;
-          return infinity;
-        }
-
-        var score = -infinity;
-        if (IsDrawAfterMove(board, move))
-        {
-          score = 0;
-        }
-        else
-        {
-          board.MakeMove(move);
-          score = MiniMax(board, timer, remainingDepth - 1, alpha, beta);
-          board.UndoMove(move);
-        }
-
-        if (!iterationHalted && score > maxEval)
-        {
-          maxEval = score;
-          if (isRoot) bestMove = move;
-        }
-
-        alpha = Math.Max(alpha, maxEval);
-
-        if (alpha >= beta) break;
+        if (isRoot) bestMove = move;
+        return board.IsWhiteToMove ? infinity : -infinity;
       }
-      return maxEval;
-    }
-    else
-    {
-      int minEval = infinity;
 
-      foreach (var move in moves)
+      int eval;
+      if (IsDrawAfterMove(board, move))
       {
-        if (IsCheckMateAfterMove(board, move))
-        {
-          if (isRoot) bestMove = move;
-          return -infinity;
-        }
-
-        var score = infinity;
-
-        if (IsDrawAfterMove(board, move))
-        {
-          score = 0;
-        }
-        else
-        {
-          board.MakeMove(move);
-          score = MiniMax(board, timer, remainingDepth - 1, alpha, beta);
-          board.UndoMove(move);
-        }
-
-        if (!iterationHalted && score < minEval)
-        {
-          minEval = score;
-          if (isRoot) bestMove = move;
-        }
-
-        beta = Math.Min(beta, minEval);
-
-        if (alpha >= beta) break;
+        eval = 0;
       }
-      return minEval;
+      else
+      {
+        board.MakeMove(move);
+        eval = MiniMax(board, timer, remainingDepth - 1, alpha, beta);
+        board.UndoMove(move);
+      }
+
+      if (iterationHalted) break;
+
+      if (board.IsWhiteToMove && eval > bestEval)
+      {
+        bestEval = eval;
+        if (isRoot) bestMove = move;
+        alpha = Math.Max(alpha, bestEval);
+      }
+      else if (!board.IsWhiteToMove && eval < bestEval)
+      {
+        bestEval = eval;
+        if (isRoot) bestMove = move;
+        beta = Math.Min(beta, bestEval);
+      }
+
+      if (alpha >= beta) break;
     }
+
+    return bestEval;
   }
 
   private int StaticEvaluation(Board board)
