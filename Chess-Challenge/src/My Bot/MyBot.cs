@@ -177,7 +177,7 @@ public class MyBot : IChessBot
       if (move.IsCapture)
       {
         //Console.WriteLine($"Found capture {move}");
-        score += 10 + GetPieceValue(move.CapturePieceType) - GetPieceValue(move.MovePieceType);
+        score += 10 * GetPieceValue(move.CapturePieceType) - GetPieceValue(move.MovePieceType);
       }
 
       if (move.IsPromotion)
