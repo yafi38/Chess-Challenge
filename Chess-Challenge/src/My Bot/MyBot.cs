@@ -75,9 +75,17 @@ public class MyBot : IChessBot
           return infinity;
         }
 
-        board.MakeMove(move);
-        var score = MiniMax(board, timer, remainingDepth - 1, alpha, beta);
-        board.UndoMove(move);
+        var score = -infinity;
+        if (IsDrawAfterMove(board, move))
+        {
+          score = 0;
+        }
+        else
+        {
+          board.MakeMove(move);
+          score = MiniMax(board, timer, remainingDepth - 1, alpha, beta);
+          board.UndoMove(move);
+        }
 
         if (!iterationHalted && score > maxEval)
         {
@@ -103,9 +111,18 @@ public class MyBot : IChessBot
           return -infinity;
         }
 
-        board.MakeMove(move);
-        var score = MiniMax(board, timer, remainingDepth - 1, alpha, beta);
-        board.UndoMove(move);
+        var score = infinity;
+
+        if (IsDrawAfterMove(board, move))
+        {
+          score = 0;
+        }
+        else
+        {
+          board.MakeMove(move);
+          score = MiniMax(board, timer, remainingDepth - 1, alpha, beta);
+          board.UndoMove(move);
+        }
 
         if (!iterationHalted && score < minEval)
         {
