@@ -52,7 +52,7 @@ public class MyBot : IChessBot
     if (remainingDepth == 0)
     {
       totalEvaluations++;
-      return StaticEvaluation(board);
+      return QuiescenceSearch(board, alpha, beta);
     }
     if (timer.MillisecondsElapsedThisTurn > 1000)
     {
@@ -130,6 +130,40 @@ public class MyBot : IChessBot
     }
 
     return score;
+  }
+
+  private int QuiescenceSearch(Board board, int alpha, int beta)
+  {
+    var bestEval = StaticEvaluation(board);
+
+    if (board.IsWhiteToMove) alpha = Math.Max(alpha, bestEval);
+    else beta = Math.Min(beta, bestEval);
+
+    if (alpha >= beta) return bestEval;
+    
+    Move[] moves = board.GetLegalMoves(true);
+
+    foreach (var move in moves)
+    {
+      board.MakeMove(move);
+      var eval = QuiescenceSearch(board, alpha, beta);
+      board.UndoMove(move);
+
+      if (board.IsWhiteToMove && eval > bestEval)
+      {
+        bestEval = eval;
+        alpha = Math.Max(alpha, bestEval);
+      }
+      else if (!board.IsWhiteToMove && eval < bestEval)
+      {
+        bestEval = eval;
+        beta = Math.Min(beta, bestEval);
+      }
+
+      if (alpha >= beta) break;
+    }
+
+    return bestEval;
   }
 
   private bool IsCheckMateAfterMove(Board board, Move move)
