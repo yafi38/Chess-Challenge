@@ -60,7 +60,8 @@ public class MyBot : IChessBot
       return 0;
     }
 
-    Move[] moves = board.GetLegalMoves();
+    Move[] moves = GetOrderedMoves(board);
+    //Move[] moves = board.GetLegalMoves();
 
     if (board.IsWhiteToMove)
     {
@@ -127,7 +128,7 @@ public class MyBot : IChessBot
 
     foreach (var pieceList in pieceLists)
     {
-      score += (pieceList.IsWhitePieceList ? 1 : -1) * pieceValues[(int)pieceList.TypeOfPieceInList] * pieceList.Count;
+      score += (pieceList.IsWhitePieceList ? 1 : -1) * GetPieceValue(pieceList.TypeOfPieceInList) * pieceList.Count;
     }
 
     bool[] isWhites = { true, false };
@@ -153,5 +154,55 @@ public class MyBot : IChessBot
     bool isMate = board.IsInCheckmate();
     board.UndoMove(move);
     return isMate;
+  }
+
+  private bool IsDrawAfterMove(Board board, Move move)
+  {
+    board.MakeMove(move);
+    bool isDraw = board.IsDraw();
+    board.UndoMove(move);
+    return isDraw;
+  }
+
+  private Move[] GetOrderedMoves(Board board)
+  {
+    var moves = board.GetLegalMoves();
+    int[] scores = new int[moves.Length];
+
+    for (int i = 0; i < moves.Length; i++)
+    {
+      var move = moves[i];
+      var score = 0;
+      
+      if (move.IsCapture)
+      {
+        //Console.WriteLine($"Found capture {move}");
+        score += 10 + GetPieceValue(move.CapturePieceType) - GetPieceValue(move.MovePieceType);
+      }
+
+      if (move.IsPromotion)
+      {
+        score += GetPieceValue(move.PromotionPieceType);
+      }
+
+      scores[i] = score;
+    }
+
+    Array.Sort(scores, moves);
+
+    Array.Reverse(moves);
+    //Array.Reverse(scores);
+
+    //for (int i = 0; i < moves.Length; i++)
+    //{
+    //  Console.WriteLine($"{moves[i]}, Score: {scores[i]}");
+    //}
+    //Console.WriteLine();
+    return moves;
+  }
+
+  private int GetPieceValue(PieceType pieceType)
+  {
+    return pieceValues[(int)pieceType];
   }
 }
