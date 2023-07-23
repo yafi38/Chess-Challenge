@@ -62,14 +62,12 @@ public class MyBot : IChessBot
 
     Move[] moves = GetOrderedMoves(board);
 
-    int bestEval = board.IsWhiteToMove ? -infinity : infinity;
-
     foreach (var move in moves)
     {
       if (IsCheckMateAfterMove(board, move))
       {
         if (isRoot) bestMove = move;
-        return board.IsWhiteToMove ? infinity : -infinity;
+        return infinity;
       }
 
       int eval;
@@ -80,29 +78,26 @@ public class MyBot : IChessBot
       else
       {
         board.MakeMove(move);
-        eval = MiniMax(board, timer, remainingDepth - 1, alpha, beta);
+        eval = -MiniMax(board, timer, remainingDepth - 1, -beta, -alpha);
         board.UndoMove(move);
       }
 
       if (iterationHalted) break;
 
-      if (board.IsWhiteToMove && eval > bestEval)
+      if (eval >= beta)
       {
-        bestEval = eval;
-        if (isRoot) bestMove = move;
-        alpha = Math.Max(alpha, bestEval);
-      }
-      else if (!board.IsWhiteToMove && eval < bestEval)
-      {
-        bestEval = eval;
-        if (isRoot) bestMove = move;
-        beta = Math.Min(beta, bestEval);
+        if (eval == beta && isRoot) bestMove = move;
+        return beta;
       }
 
-      if (alpha >= beta) break;
+      if (eval > alpha)
+      {
+        alpha = eval;
+        if (isRoot) bestMove = move;
+      }
     }
 
-    return bestEval;
+    return alpha;
   }
 
   private int StaticEvaluation(Board board)
@@ -129,41 +124,29 @@ public class MyBot : IChessBot
       }
     }
 
-    return score;
+    return board.IsWhiteToMove ? score : -score;
   }
 
   private int QuiescenceSearch(Board board, int alpha, int beta)
   {
-    var bestEval = StaticEvaluation(board);
+    var eval = StaticEvaluation(board);
 
-    if (board.IsWhiteToMove) alpha = Math.Max(alpha, bestEval);
-    else beta = Math.Min(beta, bestEval);
-
-    if (alpha >= beta) return bestEval;
+    if (eval >= beta) return beta;
+    if (eval > alpha) alpha = eval;
     
     Move[] moves = board.GetLegalMoves(true);
 
     foreach (var move in moves)
     {
       board.MakeMove(move);
-      var eval = QuiescenceSearch(board, alpha, beta);
+      eval = -QuiescenceSearch(board, -beta, -alpha);
       board.UndoMove(move);
 
-      if (board.IsWhiteToMove && eval > bestEval)
-      {
-        bestEval = eval;
-        alpha = Math.Max(alpha, bestEval);
-      }
-      else if (!board.IsWhiteToMove && eval < bestEval)
-      {
-        bestEval = eval;
-        beta = Math.Min(beta, bestEval);
-      }
-
-      if (alpha >= beta) break;
+      if (eval >= beta) return beta;
+      if (eval > alpha) alpha = eval;
     }
 
-    return bestEval;
+    return alpha;
   }
 
   private bool IsCheckMateAfterMove(Board board, Move move)
