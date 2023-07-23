@@ -10,6 +10,7 @@ public class MyBot : IChessBot
   private Move? bestMove = null;
   private bool iterationHalted = false;
   private int totalEvaluations = 0;
+  private TranspositionTable transpositionTable = new(64);
 
   public Move Think(Board board, Timer timer)
   {
@@ -22,6 +23,7 @@ public class MyBot : IChessBot
 
     for (int depth = 1; depth < maxDepth; depth++)
     {
+      transpositionTable.Clear();
       var score = MiniMax(board, timer, depth, -infinity, infinity, isRoot: true); ;
 
       Console.WriteLine("Depth: {0}, Evals: {1}", depth, totalEvaluations);
@@ -78,7 +80,13 @@ public class MyBot : IChessBot
       else
       {
         board.MakeMove(move);
-        eval = -MiniMax(board, timer, remainingDepth - 1, -beta, -alpha);
+
+        if (!transpositionTable.TryRetrieve(board.ZobristKey, out eval))
+        {
+          eval = -MiniMax(board, timer, remainingDepth - 1, -beta, -alpha);
+          transpositionTable.Store(board.ZobristKey, eval);
+        }
+
         board.UndoMove(move);
       }
 
@@ -210,5 +218,63 @@ public class MyBot : IChessBot
   private int GetPieceValue(PieceType pieceType)
   {
     return pieceValues[(int)pieceType];
+  }
+}
+
+public class TranspositionTable
+{
+  private Dictionary<ulong, LinkedListNode<Tuple<ulong, int>>> table;
+  private LinkedList<Tuple<ulong, int>> lruList;
+  private int maxCapacity;
+  public int hit = 0;
+  public int miss = 0;
+
+  public TranspositionTable(int maxCapacityInMB)
+  {
+    int maxCapacityInBytes = maxCapacityInMB * 1024 * 1024;
+    maxCapacity = maxCapacityInBytes / (3 * sizeof(ulong) + 2 * sizeof(int));
+    table = new Dictionary<ulong, LinkedListNode<Tuple<ulong, int>>>(maxCapacity);
+    lruList = new LinkedList<Tuple<ulong, int>>();
+    Console.WriteLine("Max Capacity {0}", maxCapacity);
+  }
+
+  public void Store(ulong zobristKey, int evaluation)
+  {
+    if (table.ContainsKey(zobristKey))
+    {
+      var lruNode = table[zobristKey];
+      table.Remove(zobristKey);
+      lruList.Remove(lruNode);
+    }
+
+    if (table.Count >= maxCapacity)
+    {
+      table.Remove(lruList.Last.Value.Item1);
+      lruList.RemoveLast();
+    }
+
+    var entry = lruList.AddFirst(Tuple.Create(zobristKey, evaluation));
+    table[zobristKey] = entry;
+  }
+
+  public bool TryRetrieve(ulong zobristKey, out int evaluation)
+  {
+    if (table.TryGetValue(zobristKey, out var entry))
+    {
+      lruList.Remove(entry);
+      lruList.AddFirst(entry); // Move the key to the front to indicate recent usage
+      evaluation = entry.Value.Item2;
+      hit++;
+      return true;
+    }
+    evaluation = 0;
+    miss++;
+    return false;
+  }
+
+  public void Clear()
+  {
+    table.Clear();
+    lruList.Clear();
   }
 }
