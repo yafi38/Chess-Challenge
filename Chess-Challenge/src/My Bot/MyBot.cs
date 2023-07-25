@@ -70,11 +70,11 @@ public class MyBot : IChessBot
 
       board.MakeMove(move);
 
-      if (transpositionTable.TryRetrieve(board.ZobristKey, remainingDepth, out var storedEval))
+      /*if (transpositionTable.TryRetrieve(board.ZobristKey, remainingDepth, out var storedEval))
       {
         eval = storedEval;
       }
-      else
+      else*/
       {
         if (board.IsInCheckmate())
         {
@@ -88,7 +88,7 @@ public class MyBot : IChessBot
         {
           eval = -MiniMax(board, timer, remainingDepth - 1, -beta, -alpha);
         }
-        if (!iterationHalted) transpositionTable.Store(board.ZobristKey, eval, remainingDepth);
+        //if (!iterationHalted) transpositionTable.Store(board.ZobristKey, eval, remainingDepth);
       }
       
       board.UndoMove(move);
@@ -224,7 +224,7 @@ public class MyBot : IChessBot
   }
 }
 
-public class TranspositionTable
+/*public class TranspositionTable
 {
   public Dictionary<ulong, LinkedListNode<TranspositionTableEntry>> table;
   private LinkedList<TranspositionTableEntry> lruList;
@@ -299,4 +299,4 @@ public class TranspositionTableEntry
     Evaluation = evaluation;
     Depth = depth;
   }
-}
+}*/
