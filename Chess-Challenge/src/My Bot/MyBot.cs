@@ -66,29 +66,32 @@ public class MyBot : IChessBot
 
     foreach (var move in moves)
     {
-      if (IsCheckMateAfterMove(board, move))
-      {
-        if (isRoot) bestMove = move;
-        return infinity;
-      }
-
       int eval;
-      if (IsDrawAfterMove(board, move))
+
+      board.MakeMove(move);
+
+      if (transpositionTable.TryRetrieve(board.ZobristKey, remainingDepth, out var storedEval))
       {
-        eval = 0;
+        eval = storedEval;
       }
       else
       {
-        board.MakeMove(move);
-
-        if (!transpositionTable.TryRetrieve(board.ZobristKey, out eval))
+        if (board.IsInCheckmate())
+        {
+          eval = infinity;
+        }
+        else if (board.IsDraw())
+        {
+          eval = 0;
+        }
+        else
         {
           eval = -MiniMax(board, timer, remainingDepth - 1, -beta, -alpha);
-          transpositionTable.Store(board.ZobristKey, eval);
         }
-
-        board.UndoMove(move);
+        if (!iterationHalted) transpositionTable.Store(board.ZobristKey, eval, remainingDepth);
       }
+      
+      board.UndoMove(move);
 
       if (iterationHalted) break;
 
@@ -223,9 +226,9 @@ public class MyBot : IChessBot
 
 public class TranspositionTable
 {
-  private Dictionary<ulong, LinkedListNode<Tuple<ulong, int>>> table;
-  private LinkedList<Tuple<ulong, int>> lruList;
-  private int maxCapacity;
+  public Dictionary<ulong, LinkedListNode<TranspositionTableEntry>> table;
+  private LinkedList<TranspositionTableEntry> lruList;
+  public int maxCapacity;
   public int hit = 0;
   public int miss = 0;
 
@@ -233,12 +236,12 @@ public class TranspositionTable
   {
     int maxCapacityInBytes = maxCapacityInMB * 1024 * 1024;
     maxCapacity = maxCapacityInBytes / (3 * sizeof(ulong) + 2 * sizeof(int));
-    table = new Dictionary<ulong, LinkedListNode<Tuple<ulong, int>>>(maxCapacity);
-    lruList = new LinkedList<Tuple<ulong, int>>();
-    Console.WriteLine("Max Capacity {0}", maxCapacity);
+    table = new Dictionary<ulong, LinkedListNode<TranspositionTableEntry>>(maxCapacity);
+    lruList = new LinkedList<TranspositionTableEntry>();
+    //Console.WriteLine("Max Capacity {0}", maxCapacity);
   }
 
-  public void Store(ulong zobristKey, int evaluation)
+  public void Store(ulong zobristKey, int evaluation, int depth)
   {
     if (table.ContainsKey(zobristKey))
     {
@@ -249,24 +252,29 @@ public class TranspositionTable
 
     if (table.Count >= maxCapacity)
     {
-      table.Remove(lruList.Last.Value.Item1);
+      table.Remove(lruList.Last.Value.ZobristKey);
       lruList.RemoveLast();
     }
 
-    var entry = lruList.AddFirst(Tuple.Create(zobristKey, evaluation));
+    var entry = lruList.AddFirst(new TranspositionTableEntry(zobristKey, evaluation, depth));
     table[zobristKey] = entry;
   }
 
-  public bool TryRetrieve(ulong zobristKey, out int evaluation)
+  public bool TryRetrieve(ulong zobristKey, int depth, out int evaluation)
   {
     if (table.TryGetValue(zobristKey, out var entry))
     {
-      lruList.Remove(entry);
-      lruList.AddFirst(entry); // Move the key to the front to indicate recent usage
-      evaluation = entry.Value.Item2;
-      hit++;
-      return true;
+      if (entry.Value.Depth >= depth)
+      {
+        lruList.Remove(entry);
+        lruList.AddFirst(entry);
+
+        evaluation = entry.Value.Evaluation;
+        hit++;
+        return true;
+      }
     }
+
     evaluation = 0;
     miss++;
     return false;
@@ -276,5 +284,19 @@ public class TranspositionTable
   {
     table.Clear();
     lruList.Clear();
+  }
+}
+
+public class TranspositionTableEntry
+{
+  public ulong ZobristKey;
+  public int Evaluation;
+  public int Depth;
+
+  public TranspositionTableEntry(ulong zobristKey, int evaluation, int depth)
+  {
+    ZobristKey = zobristKey;
+    Evaluation = evaluation;
+    Depth = depth;
   }
 }
