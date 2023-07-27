@@ -121,10 +121,11 @@ public class MyBot : IChessBot
   {
     var pieceLists = board.GetAllPieceLists();
     int score = 0;
+    int whiteMultiplyer = board.IsWhiteToMove ? 1 : -1;
 
     foreach (var pieceList in pieceLists)
     {
-      score += (pieceList.IsWhitePieceList ? 1 : -1) * GetPieceValue(pieceList.TypeOfPieceInList) * pieceList.Count;
+      score += (pieceList.IsWhitePieceList ? whiteMultiplyer : -whiteMultiplyer) * GetPieceValue(pieceList.TypeOfPieceInList) * pieceList.Count;
     }
 
     bool[] isWhites = { true, false };
@@ -141,7 +142,7 @@ public class MyBot : IChessBot
       }
     }
 
-    return board.IsWhiteToMove ? score : -score;
+    return score;
   }
 
   private int QuiescenceSearch(Board board, int alpha, int beta)
