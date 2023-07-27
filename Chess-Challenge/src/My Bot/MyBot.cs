@@ -64,7 +64,7 @@ public class MyBot : IChessBot
       return 0;
     }
 
-    Move[] moves = GetOrderedMoves(board);
+    Move[] moves = GetOrderedMoves(board, isRoot);
 
     foreach (var move in moves)
     {
@@ -163,7 +163,7 @@ public class MyBot : IChessBot
   }
 
 
-  private Move[] GetOrderedMoves(Board board)
+  private Move[] GetOrderedMoves(Board board, bool isRoot)
   {
     var moves = board.GetLegalMoves();
     int[] scores = new int[moves.Length];
@@ -184,6 +184,7 @@ public class MyBot : IChessBot
         score += GetPieceValue(move.PromotionPieceType);
       }
 
+      if (isRoot && move.ToString() == lastIterationBestMove.ToString()) score = infinity;
 
       scores[i] = score;
     }
