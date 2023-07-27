@@ -10,29 +10,31 @@ public class MyBot : IChessBot
   private Move? bestMove = null;
   private bool iterationHalted = false;
   private int totalEvaluations = 0;
-  private TranspositionTable transpositionTable = new(64);
+  //private TranspositionTable transpositionTable = new(64);
 
   public Move Think(Board board, Timer timer)
   {
     Move[] moves = board.GetLegalMoves();
 
-    const int maxDepth = 10;
+    const int maxDepth = 15;
     iterationHalted = false;
-    bestMove = null;
     lastIterationBestMove = null;
+    var maxScore = 0;
+    int depth = 1;
 
-    for (int depth = 1; depth < maxDepth; depth++)
+    for (depth = 1; depth < maxDepth; depth++)
     {
-      transpositionTable.Clear();
-      var score = MiniMax(board, timer, depth, -infinity, infinity, isRoot: true); ;
-
-      Console.WriteLine("Depth: {0}, Evals: {1}", depth, totalEvaluations);
-      totalEvaluations = 0;
+      bestMove = null;
+      //transpositionTable.Clear();
+      var score = MiniMax(board, timer, depth, -infinity, infinity, isRoot: true);
+      //Console.WriteLine("Depth: {0}, Evals: {1}", depth, totalEvaluations);
+      //totalEvaluations = 0;
 
       if (!iterationHalted)
       {
         lastIterationBestMove = bestMove;
-        Console.WriteLine("Depth: {0}, Score: {1}, {2}", depth, score, lastIterationBestMove.Value.ToString());
+        maxScore = score;
+        //Console.WriteLine("Depth: {0}, Score: {1}, {2}", depth, score, lastIterationBestMove.Value.ToString());
       }
       else
       {
