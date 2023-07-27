@@ -162,21 +162,6 @@ public class MyBot : IChessBot
     return alpha;
   }
 
-  private bool IsCheckMateAfterMove(Board board, Move move)
-  {
-    board.MakeMove(move);
-    bool isMate = board.IsInCheckmate();
-    board.UndoMove(move);
-    return isMate;
-  }
-
-  private bool IsDrawAfterMove(Board board, Move move)
-  {
-    board.MakeMove(move);
-    bool isDraw = board.IsDraw();
-    board.UndoMove(move);
-    return isDraw;
-  }
 
   private Move[] GetOrderedMoves(Board board)
   {
@@ -199,10 +184,6 @@ public class MyBot : IChessBot
         score += GetPieceValue(move.PromotionPieceType);
       }
 
-      if (IsDrawAfterMove(board, move))
-      {
-        score -= 10000;
-      }
 
       scores[i] = score;
     }
