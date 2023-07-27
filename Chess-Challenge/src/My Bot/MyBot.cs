@@ -10,6 +10,8 @@ public class MyBot : IChessBot
   private Move? bestMove = null;
   private bool iterationHalted = false;
   private int totalEvaluations = 0;
+  private int totalMoves = 120;
+  private int maxTimeForThisTurn = 0;
   //private TranspositionTable transpositionTable = new(64);
 
   public Move Think(Board board, Timer timer)
@@ -21,6 +23,8 @@ public class MyBot : IChessBot
     lastIterationBestMove = null;
     var maxScore = 0;
     int depth = 1;
+    int moveRemaining = Math.Max(totalMoves - board.PlyCount / 2, 10);
+    maxTimeForThisTurn = timer.MillisecondsRemaining / moveRemaining;
 
     for (depth = 1; depth < maxDepth; depth++)
     {
@@ -58,7 +62,7 @@ public class MyBot : IChessBot
       totalEvaluations++;
       return QuiescenceSearch(board, alpha, beta);
     }
-    if (timer.MillisecondsElapsedThisTurn > 1000)
+    if (timer.MillisecondsElapsedThisTurn > maxTimeForThisTurn)
     {
       iterationHalted = true;
       return 0;
