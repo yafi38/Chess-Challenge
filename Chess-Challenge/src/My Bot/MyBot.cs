@@ -123,6 +123,13 @@ public class MyBot : IChessBot
     int score = 0;
     int whiteMultiplyer = board.IsWhiteToMove ? 1 : -1;
 
+    var curPlayerMoves = board.GetLegalMoves();
+    score += curPlayerMoves.Length;
+    board.ForceSkipTurn();
+    var oppoMoves = board.GetLegalMoves();
+    board.UndoSkipTurn();
+    score -= oppoMoves.Length;
+
     foreach (var pieceList in pieceLists)
     {
       score += (pieceList.IsWhitePieceList ? whiteMultiplyer : -whiteMultiplyer) * GetPieceValue(pieceList.TypeOfPieceInList) * pieceList.Count;
