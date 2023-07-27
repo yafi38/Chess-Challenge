@@ -48,7 +48,7 @@ public class MyBot : IChessBot
     //totalEvaluations = 0;
     Console.WriteLine();
 
-    return lastIterationBestMove ?? moves[0];
+    return bestMove ?? lastIterationBestMove ?? moves[0];
   }
 
   public int MiniMax(Board board, Timer timer, int remainingDepth, int alpha, int beta, bool isRoot = false)
