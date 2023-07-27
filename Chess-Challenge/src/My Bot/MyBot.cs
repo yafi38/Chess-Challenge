@@ -128,20 +128,6 @@ public class MyBot : IChessBot
       score += (pieceList.IsWhitePieceList ? whiteMultiplyer : -whiteMultiplyer) * GetPieceValue(pieceList.TypeOfPieceInList) * pieceList.Count;
     }
 
-    bool[] isWhites = { true, false };
-
-    foreach (var isWhite in isWhites)
-    {
-      if (board.HasKingsideCastleRight(isWhite))
-      {
-        score += isWhite ? 5 : -5;
-      }
-      if (board.HasQueensideCastleRight(isWhite))
-      {
-        score += isWhite ? 5 : -5;
-      }
-    }
-
     return score;
   }
 
