@@ -149,7 +149,8 @@ public class MyBot : IChessBot
     if (eval >= beta) return beta;
     if (eval > alpha) alpha = eval;
     
-    Move[] moves = board.GetLegalMoves(true);
+    //Move[] moves = board.GetLegalMoves(true);
+    Move[] moves = GetOrderedMoves(board, false, true);
 
     foreach (var move in moves)
     {
@@ -165,9 +166,9 @@ public class MyBot : IChessBot
   }
 
 
-  private Move[] GetOrderedMoves(Board board, bool isRoot)
+  private Move[] GetOrderedMoves(Board board, bool isRoot, bool capturesOnly = false)
   {
-    var moves = board.GetLegalMoves();
+    var moves = board.GetLegalMoves(capturesOnly);
     int[] scores = new int[moves.Length];
 
     for (int i = 0; i < moves.Length; i++)
