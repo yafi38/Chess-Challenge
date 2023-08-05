@@ -55,7 +55,7 @@ public class MyBot : IChessBot
     return bestMove ?? lastIterationBestMove ?? moves[0];
   }
 
-  public int MiniMax(Board board, Timer timer, int remainingDepth, int alpha, int beta, bool isRoot = false)
+  public int MiniMax(Board board, Timer timer, int remainingDepth, int alpha, int beta, bool isRoot = false, bool nullMovePruning = true)
   {
     if (remainingDepth == 0)
     {
@@ -66,6 +66,15 @@ public class MyBot : IChessBot
     {
       iterationHalted = true;
       return 0;
+    }
+
+    if (remainingDepth > 2 && nullMovePruning && board.TrySkipTurn())
+    {
+      int eval = -MiniMax(board, timer, remainingDepth - 1 - 2, -beta, -beta + 1, nullMovePruning: false);
+      board.UndoSkipTurn();
+
+      if (eval >= beta)
+        return beta;
     }
 
     Move[] moves = GetOrderedMoves(board, isRoot);
